@@ -91,6 +91,7 @@ const webhookAgentSet = new Set(${webhookNames});
 const isLocalMode = process.env.FLUE_MODE === 'local';
 
 const manifest = ${manifest};
+const agentsBasePath = '/agents';
 
 // ─── Sandbox Environments ───────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ function createContextForRequest(id, payload) {
 // ─── Server ─────────────────────────────────────────────────────────────────
 
 function hasParsedBody(incoming) {
-  return incoming && Object.prototype.hasOwnProperty.call(incoming, 'body') && incoming.body !== undefined;
+  return incoming && Object.hasOwn(incoming, 'body') && incoming.body !== undefined;
 }
 
 function serializeParsedBody(body, headers) {
@@ -172,8 +173,8 @@ function normalizeMountedPath(request, incoming) {
   const fallback = new URL(request.url);
   const incomingUrl = typeof incoming?.url === 'string' ? incoming.url : fallback.pathname + fallback.search;
   const baseUrl = typeof incoming?.baseUrl === 'string' ? incoming.baseUrl : '';
-  if (baseUrl.endsWith('/agents')) {
-    return '/agents' + (incomingUrl === '/' ? '' : incomingUrl);
+  if (baseUrl.endsWith(agentsBasePath)) {
+    return agentsBasePath + (incomingUrl === '/' ? '' : incomingUrl);
   }
 
   const originalUrl = typeof incoming?.originalUrl === 'string' ? incoming.originalUrl : incomingUrl;
@@ -205,12 +206,12 @@ function adaptMountedRequest(request, env) {
 const app = new Hono();
 
 app.get('/health', (c) => c.json({ status: 'ok' }));
-app.get('/agents', (c) => c.json(manifest));
+app.get(agentsBasePath, (c) => c.json(manifest));
 
 // Catch any method on the agent route so non-POSTs become 405 (instead of
 // Hono's default 404 for unmatched method). Throws are translated by the
 // onError handler into the canonical error envelope.
-app.all('/agents/:name/:id', async (c) => {
+app.all(agentsBasePath + '/:name/:id', async (c) => {
   const name = c.req.param('name');
   const id = c.req.param('id');
 
