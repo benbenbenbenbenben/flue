@@ -10,8 +10,8 @@ import express from 'express';
 import { build } from '../src/build.ts';
 
 const execFile = promisify(execFileCallback);
-const packageDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(packageDir, '../..');
+const testDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(testDir, '../..');
 
 async function summarizeResponse(response) {
 	const contentType = response.headers.get('content-type')?.split(';')[0] ?? '';

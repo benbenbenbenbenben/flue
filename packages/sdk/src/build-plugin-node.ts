@@ -147,12 +147,13 @@ function hasParsedBody(incoming) {
 }
 
 function serializeParsedBody(body, headers) {
-  if (body === null || body === undefined) return undefined;
+  const nextHeaders = new Headers(headers);
+  if (body === null || body === undefined) return { body: undefined, headers: nextHeaders };
   if (typeof body === 'string' || body instanceof Uint8Array || body instanceof ArrayBuffer) {
-    return body;
+    return { body, headers: nextHeaders };
   }
 
-  const contentType = (headers.get('content-type') || '').toLowerCase();
+  const contentType = (nextHeaders.get('content-type') ?? '').toLowerCase();
   if (contentType.includes('application/x-www-form-urlencoded') && typeof body === 'object') {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(body)) {
@@ -162,11 +163,11 @@ function serializeParsedBody(body, headers) {
         params.append(key, String(value));
       }
     }
-    return params.toString();
+    return { body: params.toString(), headers: nextHeaders };
   }
 
-  if (!contentType) headers.set('content-type', 'application/json');
-  return JSON.stringify(body);
+  if (!contentType) nextHeaders.set('content-type', 'application/json');
+  return { body: JSON.stringify(body), headers: nextHeaders };
 }
 
 function normalizeMountedPath(request, incoming) {
@@ -195,10 +196,10 @@ function adaptMountedRequest(request, env) {
     return new Request(url, request);
   }
 
-  const body = serializeParsedBody(incoming.body, headers);
+  const { body, headers: rewrittenHeaders } = serializeParsedBody(incoming.body, headers);
   return new Request(url, {
     method: request.method,
-    headers,
+    headers: rewrittenHeaders,
     body,
   });
 }
