@@ -97,6 +97,21 @@ node dist/server.mjs
 
 `flue build --target node` compiles your workspace into a `./dist` directory. The built server uses [Hono](https://hono.dev/) under the hood and listens on port 3000 by default (configurable via the `PORT` environment variable). Your project's `node_modules` are still needed at runtime — the build externalizes your dependencies rather than bundling them.
 
+If you already have an Express app, mount the built Flue server directly instead of proxying to a second process:
+
+```ts
+import express from 'express';
+import { createMiddleware } from './dist/server.mjs';
+
+const app = express();
+app.use(express.json());
+app.use('/agents', createMiddleware());
+
+app.listen(3000);
+```
+
+That mounted middleware serves the same `/agents/...` routes as the standalone Flue server. If you want the standalone process, keep using `node dist/server.mjs` (or `import { start } from './dist/server.mjs'; start();`).
+
 You can also invoke any agent from the CLI without starting a server. `flue run` accepts the same `--env` flag:
 
 ```bash
