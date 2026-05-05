@@ -161,6 +161,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20250410.0
         version: 4.20260505.1
+      express:
+        specifier: ^5.1.0
+        version: 5.2.1
       tsdown:
         specifier: ^0.20.3
         version: 0.20.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(typescript@5.9.3)
