@@ -1,11 +1,17 @@
 import assert from 'node:assert/strict';
+import { execFile as execFileCallback } from 'node:child_process';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { promisify } from 'node:util';
 import test from 'node:test';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import express from 'express';
 import { build } from '../src/build.ts';
+
+const execFile = promisify(execFileCallback);
+const packageDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(packageDir, '../..');
 
 async function summarizeResponse(response) {
 	const contentType = response.headers.get('content-type')?.split(';')[0] ?? '';
@@ -17,7 +23,16 @@ async function summarizeResponse(response) {
 	};
 }
 
+async function ensureSdkBuild() {
+	await execFile('pnpm', ['--filter', '@flue/sdk', 'build'], {
+		cwd: repoRoot,
+		env: process.env,
+	});
+}
+
 test('built node target mounts into express at /agents', async (t) => {
+	await ensureSdkBuild();
+
 	const root = await mkdtemp(path.join(tmpdir(), 'flue-express-middleware-'));
 	t.after(async () => {
 		await rm(root, { recursive: true, force: true });
